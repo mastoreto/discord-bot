@@ -11,6 +11,7 @@
  */
 
 import { prisma } from '@discord-bot/db';
+import Logger from './logs/Logger';
 import { initTRPC } from '@trpc/server';
 import superjson from 'superjson';
 import { ZodError } from 'zod';
@@ -90,6 +91,27 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
 export const createTRPCRouter = t.router;
 
 /**
+ * Definition of middlewares to intercept requests and log
+ * custom messages with Winston: a middleware is created for
+ * general logs, and another for error logs.
+ */
+
+export const loggerMiddleware = t.middleware(async ({ path, type, next }) => {
+  Logger.info(`🚀 ${type} - ${path}`);
+  const start = Date.now();
+  try {
+    const result = await next();
+    const duration = Date.now() - start;
+    Logger.info(`✅ ${type} - ${path} - Duración: ${duration}ms`);
+    return result;
+  } catch (error) {
+    const duration = Date.now() - start;
+    Logger.error(`❌ ${type} - ${path} - Duración: ${duration}ms - Error: ${error as Error}`);
+    throw error;
+  }
+});
+
+/**
  * Public (unauthed) procedure.
  *
  * This is the base piece you use to build new queries and
@@ -97,7 +119,7 @@ export const createTRPCRouter = t.router;
  * user querying is authorized, but you can still access
  * user session data if they are logged in.
  */
-export const publicProcedure = t.procedure;
+export const publicProcedure = t.procedure.use(loggerMiddleware);
 
 /**
  * Reusable middleware that enforces users are logged in
@@ -113,4 +135,4 @@ export const publicProcedure = t.procedure;
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure;
+export const protectedProcedure = t.procedure.use(loggerMiddleware);
