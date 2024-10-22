@@ -10,7 +10,7 @@
  * are documented accordingly near the end.
  */
 
-import { prisma } from '@discord-bot/db';
+import { prisma, Prisma } from '@discord-bot/db';
 import Logger from './logs/Logger';
 import { initTRPC } from '@trpc/server';
 import superjson from 'superjson';
@@ -96,17 +96,25 @@ export const createTRPCRouter = t.router;
  * general logs, and another for error logs.
  */
 
-export const loggerMiddleware = t.middleware(async ({ path, type, next }) => {
+const loggerMiddleware = t.middleware(async ({ path, type, next }) => {
   Logger.info(`🚀 ${type} - ${path}`);
   const start = Date.now();
+  const result = await next();
+  const duration = Date.now() - start;
+  Logger.info(`✅ ${type} - ${path} - Duración: ${duration}ms`);
+  return result;
+});
+
+const errorLoggerMiddleware = t.middleware(async ({ path, type, next }) => {
   try {
-    const result = await next();
-    const duration = Date.now() - start;
-    Logger.info(`✅ ${type} - ${path} - Duración: ${duration}ms`);
-    return result;
+    return await next();
   } catch (error) {
-    const duration = Date.now() - start;
-    Logger.error(`❌ ${type} - ${path} - Duración: ${duration}ms - Error: ${error as Error}`);
+    Logger.error(`❌ Error in ${type} - ${path}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    if (error instanceof ZodError) {
+      Logger.error(`Validation errors: ${JSON.stringify(error.flatten())}`);
+    } else if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      Logger.error(`Prisma error code: ${error.code}, meta: ${JSON.stringify(error.meta)}`);
+    }
     throw error;
   }
 });
@@ -119,7 +127,7 @@ export const loggerMiddleware = t.middleware(async ({ path, type, next }) => {
  * user querying is authorized, but you can still access
  * user session data if they are logged in.
  */
-export const publicProcedure = t.procedure.use(loggerMiddleware);
+export const publicProcedure = t.procedure.use(loggerMiddleware).use(errorLoggerMiddleware);
 
 /**
  * Reusable middleware that enforces users are logged in
@@ -135,4 +143,4 @@ export const publicProcedure = t.procedure.use(loggerMiddleware);
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(loggerMiddleware);
+export const protectedProcedure = t.procedure.use(loggerMiddleware).use(errorLoggerMiddleware);
