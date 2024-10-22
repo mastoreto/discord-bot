@@ -6,6 +6,9 @@ node_modules
 .pnp.js
 .tool-versions
 
+#Logs
+packages/api/log_files
+
 # Local env files
 .env
 .env.local
