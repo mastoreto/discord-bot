@@ -1,0 +1,36 @@
+{
+  "name": "@discord-bot/logs",
+  "version": "0.1.0",
+  "license": "MIT",
+  "author": "Indie Creators HQ",
+  "type": "module",
+  "types": "./src/index.ts",
+  "scripts": {
+    "dev": "FORCE_COLOR=3 pnpm with-env node --import tsx src/index.ts",
+    "clean": "git clean -xdf .next .turbo node_modules dist log_files",
+    "lint": "eslint .",
+    "lint:fix": "pnpm lint --fix",
+    "type-check": "tsc --noEmit",
+    "with-env": "dotenv -e ../../.env.${NODE_ENV:-local} --"
+  },
+  "dependencies": {
+    "@discord-bot/api": "workspace:*",
+    "@discord-bot/db": "workspace:*",
+    "@discord-bot/error-handler": "workspace:*",
+    "chalk": "^5.3.0",
+    "logform": "^2.6.1",
+    "tsx": "^4.19.1",
+    "winston": "^3.15.0",
+    "winston-chalk": "^1.0.12"
+  },
+  "devDependencies": {
+    "@discord-bot/eslint-config": "workspace:*",
+    "@discord-bot/typescript-config": "workspace:*",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "dotenv-cli": "^7.4.2",
+    "eslint": "^9.11.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.6.2"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "extends": "@discord-bot/typescript-config/bot.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "paths": {
+      "~/*": ["./src/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", "**/*.cjs", "**/*.mjs"],
+  "exclude": ["node_modules"]
+}
